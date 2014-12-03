@@ -3,19 +3,12 @@ package de.tuberlin.dima;
 import de.tuberlin.dima.Config;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.operators.FlatMapOperator;
-import org.apache.flink.api.java.operators.ProjectOperator;
-import org.apache.flink.api.java.operators.ProjectOperator.Projection;
-import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.util.Collector;
-
-import java.util.Random;
 import java.util.regex.Pattern;
 
 // Generate undirected graph as the following logic
@@ -32,7 +25,7 @@ public class GenerateUndirectedGraph {
 
 		/* Convert the input to edges, consisting of (source, target, 1) */
 		DataSet<Tuple2<Long, Long>> arcs = input.flatMap(new ArcReader())
-				.distinct();		
+				.distinct();
 
 		// 1->2 => 2->1
 		DataSet<Tuple2<Long, Long>> reverseArcs = arcs
