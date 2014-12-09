@@ -23,7 +23,7 @@ public class GenerateUndirectedGraph {
 		DataSource<String> input = env.readTextFile(Config
 				.pathToDirectedGraph());
 
-		/* Convert the input to edges, consisting of (source, target, 1) */
+		/* Convert the input to edges, consisting of (source, target) */
 		DataSet<Tuple2<Long, Long>> arcs = input.flatMap(new ArcReader())
 				.distinct();
 
