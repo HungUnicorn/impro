@@ -2,13 +2,17 @@ package de.tuberlin.dima;
 
 import de.tuberlin.dima.Config;
 
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.operators.DataSource;
-import org.apache.flink.api.java.operators.FlatMapOperator;
+import org.apache.flink.api.java.operators.ProjectOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.util.Collector;
+
 import java.util.regex.Pattern;
 
 // Generate undirected graph as the following logic
@@ -23,29 +27,32 @@ public class GenerateUndirectedGraph {
 		DataSource<String> input = env.readTextFile(Config
 				.pathToDirectedGraph());
 
-		/* Convert the input to edges, consisting of (source, target) */
-		DataSet<Tuple2<Long, Long>> arcs = input.flatMap(new ArcReader())
-				.distinct();
+		/* Convert the input to edges, consisting of (source, target, 1) */
+		DataSet<Tuple3<Long, Long, Integer>> arcs = input.flatMap(
+				new ArcReader()).distinct();
 
-		// 1->2 => 2->1
-		DataSet<Tuple2<Long, Long>> reverseArcs = arcs
-				.flatMap(new ArcReverse());
+		// Replace join by checking (source>target) then emit (Source,Target,1), otherwise emit
+		// (Target, Source, 1)
+		DataSet<Tuple3<Long, Long, Integer>> oneDirectionArc = arcs
+				.flatMap(new OneDirectionArc());
 
-		FlatMapOperator<Tuple2<Tuple2<Long, Long>, Tuple2<Long, Long>>, Tuple2<Long, Long>> undirectedEdge = arcs
-				.join(reverseArcs).where(0, 1).equalTo(0, 1)
-				.flatMap(new UndirectedEdge());
+		// Filter sum of count > 1
+		ProjectOperator<Tuple3<Long, Long, Integer>, Tuple2<Long, Long>> edges = oneDirectionArc
+				.groupBy(0, 1).aggregate(Aggregations.SUM, 2)
+				.filter(new EdgeFilter()).project(0, 1).types(Long.class, Long.class);
 
-		undirectedEdge.print();
-
+		edges.print();
+		
 		env.execute();
 	}
 
 	public static class ArcReader implements
-			FlatMapFunction<String, Tuple2<Long, Long>> {
+			FlatMapFunction<String, Tuple3<Long, Long, Integer>> {
 
 		private static final Pattern SEPARATOR = Pattern.compile("[ \t,]");
 
-		public void flatMap(String s, Collector<Tuple2<Long, Long>> collector)
+		public void flatMap(String s,
+				Collector<Tuple3<Long, Long, Integer>> collector)
 				throws Exception {
 			if (!s.startsWith("%")) {
 				String[] tokens = SEPARATOR.split(s);
@@ -53,32 +60,36 @@ public class GenerateUndirectedGraph {
 				long source = Long.parseLong(tokens[0]);
 				long target = Long.parseLong(tokens[1]);
 
-				collector.collect(new Tuple2<Long, Long>(source, target));
+				collector.collect(new Tuple3<Long, Long, Integer>(source,
+						target, (int) 1));
 			}
 		}
 	}
 
-	public static class ArcReverse implements
-			FlatMapFunction<Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static class OneDirectionArc
+			implements
+			FlatMapFunction<Tuple3<Long, Long, Integer>, Tuple3<Long, Long, Integer>> {
 
-		public void flatMap(Tuple2<Long, Long> value,
-				Collector<Tuple2<Long, Long>> out) throws Exception {
+		public void flatMap(Tuple3<Long, Long, Integer> value,
+				Collector<Tuple3<Long, Long, Integer>> collector)
+				throws Exception {
 
-			out.collect(new Tuple2<Long, Long>(value.f1, value.f0));
-
+			if (value.f0 < value.f1)
+				collector.collect(new Tuple3<Long, Long, Integer>(value.f0,
+						value.f1, value.f2));
+			else
+				collector.collect(new Tuple3<Long, Long, Integer>(value.f1,
+						value.f0, value.f2));
 		}
 	}
 
-	public static class UndirectedEdge
-			implements
-			FlatMapFunction<Tuple2<Tuple2<Long, Long>, Tuple2<Long, Long>>, Tuple2<Long, Long>> {
+	public static class EdgeFilter implements
+			FilterFunction<Tuple3<Long, Long, Integer>> {
 
-		public void flatMap(
-				Tuple2<Tuple2<Long, Long>, Tuple2<Long, Long>> edge,
-				Collector<Tuple2<Long, Long>> collector) throws Exception {
+		public boolean filter(Tuple3<Long, Long, Integer> value)
+				throws Exception {
+			return value.f2 > 1;
 
-			Tuple2<Long, Long> edge1 = edge.f0;
-			collector.collect(edge1);
 		}
 	}
 }
