@@ -21,6 +21,15 @@ public class GenerateUndirectedGraph {
 
 	public static void main(String[] args) throws Exception {
 
+		 if (args.length == 2) {
+	            getUndirectedGraph(args[0], args[1]);
+	        } else{
+	            System.out.println("Parameters: inputFile outputFile ");
+	        }
+	}
+	
+	public static void getUndirectedGraph(String inputPath, String outputPath) throws Exception
+	{
 		ExecutionEnvironment env = ExecutionEnvironment
 				.getExecutionEnvironment();
 
@@ -42,6 +51,7 @@ public class GenerateUndirectedGraph {
 				.filter(new EdgeFilter()).project(0, 1).types(Long.class, Long.class);
 
 		edges.print();
+		edges.writeAsCsv(outputPath, "\n", " ");
 		
 		env.execute();
 	}

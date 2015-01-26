@@ -5,11 +5,11 @@ public class Config {
   private Config() {}
   
   public static String pathToDirectedGraph() {
-    return "/home/hung/impro/src/test/resource/test";
+    return "/home/amit/impro/test1";
   }
 
   public static String outputPath() {
-    return "/tmp/impro/";
+    return "/home/amit/impro/output1";
   }
   
 }
