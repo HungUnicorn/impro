@@ -1,5 +1,7 @@
 package de.tuberlin.dima;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,58 +10,55 @@ import java.util.Set;
 
 import org.junit.Test;
 
-
-
 public class TestGenerateUndirectedGraph {
-	
-		Set<String> testResultSet;
 
-	    Set<String> knownAnswerSet;
+	Set<String> testResultSet;
 
-	    String outputDirectoryPath;
+	Set<String> knownAnswerSet;
 
-	    File outputDirectory;
+	String outputDirectoryPath;
 
-	    String testInputPath;
+	File outputDirectory;
 
-	    File testAnswerFile;
+	String testInputPath;
 
-	    
-	    public void setUp() throws Exception {
-	        testResultSet = new HashSet<String>();
-	        knownAnswerSet = new HashSet<String>();
+	File testAnswerFile;
 
-	        testInputPath = String.format("/home/amit/impro/test1");
-	        testAnswerFile = new File("/home/amit/impro/ansTest1");
-	        outputDirectoryPath = String.format("/home/amit/impro/output1");
-	        outputDirectory = new File(outputDirectoryPath);
-  
-	        
+	public void setUp() throws Exception {
+		testResultSet = new HashSet<String>();
+		knownAnswerSet = new HashSet<String>();
 
-	        GenerateUndirectedGraph.getUndirectedGraph(testInputPath, outputDirectoryPath);
+		testInputPath = String.format("/home/amit/impro/test1");
+		testAnswerFile = new File("/home/amit/impro/ansTest1");
+		outputDirectoryPath = String.format("/home/amit/impro/output1");
+		outputDirectory = new File(outputDirectoryPath);
 
-	        String line;
-	        for (final File fileEntry : outputDirectory.listFiles()) {
-	            BufferedReader br = new BufferedReader(new FileReader(fileEntry));
-	            while ((line = br.readLine()) != null) {
-	                testResultSet.add(line);
-	            }
-	            br.close();
-	        }
+		GenerateUndirectedGraph.getUndirectedGraph(testInputPath,
+				outputDirectoryPath);
 
-	        BufferedReader br = new BufferedReader(new FileReader(testAnswerFile));
-	        while ((line = br.readLine()) != null) {
-	            knownAnswerSet.add(line);
-	        }
-	        br.close();
+		String line;
+		for (final File fileEntry : outputDirectory.listFiles()) {
+			BufferedReader br = new BufferedReader(new FileReader(fileEntry));
+			while ((line = br.readLine()) != null) {
+				testResultSet.add(line);
+			}
+			br.close();
+		}
 
-	    }
+		BufferedReader br = new BufferedReader(new FileReader(testAnswerFile));
+		while ((line = br.readLine()) != null) {
+			knownAnswerSet.add(line);
+		}
+		br.close();
 
-	    @Test
-	    public void test() throws Exception {
-	    	setUp();
-	    	junit.framework.TestCase.assertTrue(knownAnswerSet.containsAll(testResultSet));
-	    	junit.framework.TestCase.assertTrue(testResultSet.containsAll(knownAnswerSet));
-	    }
+	}
 
+	@Test
+	public void testEqual() throws Exception {
+		setUp();
+		assertTrue(knownAnswerSet
+				.containsAll(testResultSet));
+		assertTrue(testResultSet
+				.containsAll(knownAnswerSet));
+	}	
 }
