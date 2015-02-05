@@ -12,12 +12,13 @@ import junit.framework.TestCase;
 import org.junit.Test;
 
 /* the colors used should be at most max(degree) + 1
- * See bound: http://en.wikipedia.org/wiki/Graph_coloring#Bounds_on_the_chromatic_number*/
+ * See upper bound: http://en.wikipedia.org/wiki/Graph_coloring#Bounds_on_the_chromatic_number*/
 public class TestGraphColoring extends TestCase {
 
 	Set<String> testResultSet;
+	private int degree;
 
-	private int maxDegree;
+	private int maxDegree = 0;
 	private int colors;
 
 	String outputDirectoryPath;
@@ -31,9 +32,9 @@ public class TestGraphColoring extends TestCase {
 	public void setUp() throws Exception {
 		testResultSet = new HashSet<String>();
 
-		testAnswerFile = new File(Config.maxDegree());		
+		testAnswerFile = new File(Config.maxDegree());
 		outputDirectory = new File(Config.graphColoring());
-		
+
 		String s;
 		Pattern SEPARATOR = Pattern.compile("[ \t,]");
 
@@ -46,20 +47,25 @@ public class TestGraphColoring extends TestCase {
 			br.close();
 		}
 
-		BufferedReader br = new BufferedReader(new FileReader(testAnswerFile));
-		while ((s = br.readLine()) != null) {
-			maxDegree = Integer.parseInt(s);
+		for (final File fileEntry : testAnswerFile.listFiles()) {
+			BufferedReader br = new BufferedReader(new FileReader(fileEntry));
+			while ((s = br.readLine()) != null) {
+				degree = Integer.parseInt(s);
+
+				if (degree > maxDegree)
+					maxDegree = degree;
+			}
+			br.close();
 		}
-		br.close();
 
 	}
 
 	@Test
-	public void testColorsUsedBound() throws Exception {
+	public void testColorsUpperBound() throws Exception {
 		setUp();
 		colors = testResultSet.size();
 		assertTrue("Colors (" + colors + ") should be at most max degree + 1 ("
-				+ (maxDegree +1) + ")", colors <= maxDegree + 1);
+				+ (maxDegree + 1) + ")", colors <= maxDegree + 1);
 
 	}
 }

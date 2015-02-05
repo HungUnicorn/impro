@@ -49,7 +49,7 @@ public class HighestDegree {
 		
 		// Output(Maxdegree), sort on degree
 		DataSet<Tuple1<Long>> topKReducer = topKMapper.groupBy(0)
-				.sortGroup(2, Order.DESCENDING).first(1).project(2).types(Long.class).setParallelism(1);
+				.sortGroup(2, Order.DESCENDING).first(1).project(2).types(Long.class);
 
 		topKReducer.writeAsCsv(Config.maxDegree(), WriteMode.OVERWRITE);
 		
